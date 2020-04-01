@@ -1,0 +1,89 @@
+.App {
+  text-align: center;
+  position: relative;
+}
+
+.App-header {
+  /* min-height: 100vh; */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+  border: 1px dashed ;
+}
+
+.cropper-drag-wrap {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  width: 300px;
+  height: 300px;
+  cursor: crosshair;
+}
+
+.dashed-line {
+  border: 0 dashed #eee;
+  display: block;
+  opacity: 0.5;
+  position: absolute;
+}
+
+.slide-dashed-x {
+  border-bottom-width: 1px;
+  border-top-width: 1px;
+  height: calc(100% / 3);
+  left: 0;
+  top: calc(100% / 3);
+  width: 100%;
+}
+.slide-dashed-y {
+  border-left-width: 1px;
+  border-right-width: 1px;
+  height: 100%;
+  left: calc(100% / 3);
+  top: 0;
+  width: calc(100% / 3);
+}
+
+.border-line {
+  display: block;
+  height: 100%;
+  opacity: 0.4;
+  position: absolute;
+  background-color: #39f;
+}
+
+.slide-border-right {
+  cursor: ew-resize;
+  right: -3px;
+  top: 0;
+  width: 5px;
+}
+
+.slide-border-top {
+  cursor: ns-resize;
+  left: 0;
+  top: -3px;
+  height: 5px;
+  width: 100%;
+}
+
+.slide-border-left {
+  cursor: ew-resize;
+  left: -3px;
+  top: 0;
+  width: 5px;
+}
+
+.slide-border-bom {
+  cursor: ns-resize;
+  left: 0;
+  bottom: -3px;
+  height: 5px;
+  width: 100%;
+}
+
