@@ -120,7 +120,7 @@ function App() {
     const parHeight = container.offsetHeight
     const parWidth = container.offsetWidth
     const parLeft = parseInt(container.style.left || 0, 10)
-    const parRight = parseInt(container.style.top || 0, 10)
+    const parTop = parseInt(container.style.top || 0, 10)
     // const curEl = cropper.current
     if (direction === 'r' || direction === 'b') {
       let moveLength
@@ -130,6 +130,7 @@ function App() {
         moveLength = resizeArea.height + e.clientY - resizeArea.posTop
       }
 
+      // 到达右边界
       if (parseInt(curEl.style.left, 0) + moveLength > parWidth || parseInt(curEl.style.top, 10) + moveLength > parHeight) {
         const w = parWidth - parseInt(curEl.style.left, 10)
         const h = parHeight - parseInt(curEl.style.top, 10)
@@ -139,7 +140,39 @@ function App() {
         curEl.style.height = moveLength + 'px'
       }
     } else {
+      // 移动的长度
+      let moveLength
+      // 向左移动
+      if(direction === 'l') {
+        moveLength = resizeArea.posLeft - e.clientX
+      } else { // 向上移动
+        moveLength = resizeArea.posTop - e.clientY
+      }
+      // 距离左边距的位置
+      const leftLength = resizeArea.left - moveLength
+      // 距离上边距的位置
+      const topLength = resizeArea.top - moveLength
 
+      // 到达边界 做边界判断
+      if (leftLength <= parLeft || topLength < parTop) {
+        const isMargin = resizeArea.left - parLeft
+
+        // 判断顶部会不会超出
+        // 到达左边界 
+        if (isMargin < resizeArea.top) {
+          curEl.style.top = `${resizeArea.top - isMargin}px`
+          curEl.style.left = `${parLeft}px`
+        } else {
+          curEl.style.top = `${parTop}px`
+          curEl.style.left = `${resizeArea.left + parTop - resizeArea.top}px`
+        }
+      } else {
+        // 改变选择框的 大小
+        curEl.style.left = `${leftLength}px`
+        curEl.style.top = `${topLength}px`
+        curEl.style.width = `${resizeArea.width + moveLength}px`
+        curEl.style.height = `${resizeArea.height + moveLength}px`
+      }
     }
   }
 
