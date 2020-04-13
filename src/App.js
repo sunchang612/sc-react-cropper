@@ -78,12 +78,24 @@ function App() {
     const { curEl, parentEl, selectArea } = state
     if (!curEl || !parentEl || !selectArea) return
     // 移动中实时计算位置
-    const moveLeft = e.clientX - selectArea.left
-    const moveRight = e.clientY - selectArea.top
+    let moveLeft = e.clientX - selectArea.left
+    let moveTop = e.clientY - selectArea.top
+
+    // 左边距判断
+    if (moveLeft <= 0) {
+      moveLeft = 0
+    } else if (moveLeft > selectArea.maxMoveX) { // 右边可移动范围
+      moveLeft = selectArea.maxMoveX
+    }
+    if (moveTop <= 0) {
+      moveTop = 0
+    } else if (moveTop > selectArea.maxMoveY)  { // 下 可移动范围
+      moveTop = selectArea.maxMoveY
+    }
     
     const newStyle = curEl.style
     newStyle.left = moveLeft + 'px'
-    newStyle.top = moveRight + 'px'
+    newStyle.top = moveTop + 'px'
   }
 
   // 鼠标结束
