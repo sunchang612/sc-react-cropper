@@ -188,9 +188,39 @@ function App() {
     }
   }
 
+  const handleClick = () => {
+    const { selectArea } = state
+    const cropCanvas = document.createElement('canvas')
+
+    const style = cropper.current.style
+    // 因为默认位置 这里是 NAN
+    const top =  parseFloat(style.top) || 0
+    const left = parseFloat(style.left) || 0
+    const width = cropper.current.clientWidth
+    const height = cropper.current.clientHeight
+    
+    console.log(top, left, width, height)
+    // const cropCanvas = document.getElementById('canvas')
+
+
+    cropCanvas.height = height
+    cropCanvas.width = width
+    const resImg = new Image()
+    const imgUrl = require('./image/123.jpg')
+    resImg.src = imgUrl
+    resImg.onload = () => {
+
+      const canvas2 = cropCanvas.getContext('2d').drawImage(resImg,  left, top, width, height, 0, 0, width, height)
+      cropCanvas.toDataURL('image/png', 1)
+      console.log('canvas2--------->', resImg,  cropCanvas.toDataURL('image/png', 1))
+      document.getElementById('img').src = cropCanvas.toDataURL('image/png', 1)
+    }
+    // const base = canvas2.toDataURL('image')
+  }
+
   return (
     <div className="App">
-      <div>
+      <div  className="container">
         <div className="App-header">
           <img id="image" src={require('./image/123.jpg')} alt=""/>
         </div>
@@ -206,6 +236,10 @@ function App() {
           <span className="border-line slide-border-bom" onMouseDown={(e) => handleResizeReady(e, 'b')}></span>
         </div>
       </div>
+
+      <div className="cropper-btn" onClick={handleClick}>裁剪图片</div>
+      {/* <canvas id="canvas"></canvas> */}
+      <img id="img"></img>
     </div>
   )
 }
