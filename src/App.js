@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useReducer, Component } from 'react';
+import React, { useEffect, useRef, useReducer, useCallback } from 'react';
 import './App.css';
 
 const initContentState = {
@@ -14,7 +14,6 @@ const initContentState = {
 function reducer(state, action) {
   switch(action.type) {
     case 'update':
-      console.log('action---------->', action)
       return {...state, ...action.data}
     case 'reset':
       return {...state, ...action.data}
@@ -25,7 +24,6 @@ function reducer(state, action) {
 
 function App() {
   const cropper = useRef()
-  const rightLine = useRef()
   const [state, dispatch] = useReducer(reducer, initContentState)
 
   // 移动开始
@@ -47,85 +45,13 @@ function App() {
     dispatch({type: 'update', data:{ curEl, parentEl, selectArea , isRefresh: true }})
   }
 
-  useEffect(() => {
-    if (state.isRefresh) {
-      document.addEventListener(
-        'mousemove',
-        onMoveStart,
-      )
-      document.addEventListener(
-        'mouseup',
-        handleMoveCloses,
-        false
-      )
-    }
-    if (state.isMoveRefresh) {
-      document.addEventListener(
-        'mouseup',
-        handleMoveCloses,
-        false
-      )
-      document.addEventListener('mousemove', handleReset, false)
-    }
-    return () => {
-      document.removeEventListener('mousemove', onMoveStart, false)
-      document.removeEventListener('mouseup', handleMoveCloses, false)
-      document.removeEventListener('mousemove', handleReset, false)
-    }
-  }, [state.isRefresh, state.isMoveRefresh])
 
-  const onMoveStart = (e) => {
-    const { curEl, parentEl, selectArea } = state
-    if (!curEl || !parentEl || !selectArea) return
-    // 移动中实时计算位置
-    let moveLeft = e.clientX - selectArea.left
-    let moveTop = e.clientY - selectArea.top
-
-    // 左边距判断
-    if (moveLeft <= 0) {
-      moveLeft = 0
-    } else if (moveLeft > selectArea.maxMoveX) { // 右边可移动范围
-      moveLeft = selectArea.maxMoveX
-    }
-    if (moveTop <= 0) {
-      moveTop = 0
-    } else if (moveTop > selectArea.maxMoveY)  { // 下 可移动范围
-      moveTop = selectArea.maxMoveY
-    }
+  const handleReset = useCallback((e) => {
+    const { resizeArea, direction, moveEl, isMoveRefresh } = state
     
-    const newStyle = curEl.style
-    newStyle.left = moveLeft + 'px'
-    newStyle.top = moveTop + 'px'
-  }
+    const curEl = cropper.currents
 
-  // 鼠标结束
-  const handleMoveCloses = () => {
-    dispatch({type: 'reset', data:{ curEl: '', parentEl: '', selectArea: '' , isRefresh: false, isMoveRefresh: false }})
-  }
-
-  // resize
-  const handleResizeReady = (e, direction) => {
-    e.stopPropagation()
-
-    const curEl = cropper.current
-  
-    const resizeArea = {
-      posLeft: e.clientX,
-      posTop: e.clientY,
-      width: curEl.offsetWidth,
-      height: curEl.offsetHeight,
-      left: parseInt(curEl.style.left, 10),
-      top: parseInt(curEl.style.top, 10)
-    }
-    dispatch({type: 'update', data:{ resizeArea, isMoveRefresh: true, direction, moveEl: e}})
-  }
-
-  const handleReset = (e) => {
-    const { resizeArea, direction, moveEl } = state
-    
-    const curEl = cropper.current
-
-    if (!resizeArea || !moveEl) return
+    if (!resizeArea || !moveEl || !isMoveRefresh) return
     // return
     // 获取父级元素
     const container = cropper.current.parentElement
@@ -170,7 +96,7 @@ function App() {
         const isMargin = resizeArea.left - parLeft
 
         // 判断顶部会不会超出
-        // 到达左边界 
+        // 到达左边界
         if (isMargin < resizeArea.top) {
           curEl.style.top = `${resizeArea.top - isMargin}px`
           curEl.style.left = `${parLeft}px`
@@ -186,10 +112,83 @@ function App() {
         curEl.style.height = `${resizeArea.height + moveLength}px`
       }
     }
+  }, [state])
+
+  const onMoveStart = useCallback((e) => {
+    const { curEl, parentEl, selectArea, isRefresh } = state
+    if (!curEl || !parentEl || !selectArea || !isRefresh) return
+    // 移动中实时计算位置
+    let moveLeft = e.clientX - selectArea.left
+    let moveTop = e.clientY - selectArea.top
+
+    // 左边距判断
+    if (moveLeft <= 0) {
+      moveLeft = 0
+    } else if (moveLeft > selectArea.maxMoveX) { // 右边可移动范围
+      moveLeft = selectArea.maxMoveX
+    }
+    if (moveTop <= 0) {
+      moveTop = 0
+    } else if (moveTop > selectArea.maxMoveY)  { // 下 可移动范围
+      moveTop = selectArea.maxMoveY
+    }
+    
+    const newStyle = curEl.style
+    newStyle.left = moveLeft + 'px'
+    newStyle.top = moveTop + 'px'
+  }, [state])
+
+  useEffect(() => {
+    if (handleReset) {
+      document.addEventListener(
+        'mousemove',
+        onMoveStart,
+        false
+      )
+      document.addEventListener(
+        'mouseup',
+        handleMoveCloses,
+        false
+      )
+    }
+    if (onMoveStart) {
+      document.addEventListener(
+        'mouseup',
+        handleMoveCloses,
+        false
+      )
+      document.addEventListener('mousemove', handleReset, false)
+    }
+    return () => {
+      document.removeEventListener('mousemove', onMoveStart, false)
+      document.removeEventListener('mouseup', handleMoveCloses, false)
+      document.removeEventListener('mousemove', handleReset, false)
+    }
+  }, [handleReset, onMoveStart])
+
+  // 鼠标结束
+  const handleMoveCloses = () => {
+    dispatch({type: 'reset', data:{ curEl: '', parentEl: '', selectArea: '' , isRefresh: false, isMoveRefresh: false }})
+  }
+
+  // resize
+  const handleResizeReady = (e, direction) => {
+    e.stopPropagation()
+
+    const curEl = cropper.current
+  
+    const resizeArea = {
+      posLeft: e.clientX,
+      posTop: e.clientY,
+      width: curEl.offsetWidth,
+      height: curEl.offsetHeight,
+      left: parseInt(curEl.style.left, 10),
+      top: parseInt(curEl.style.top, 10)
+    }
+    dispatch({type: 'update', data:{ resizeArea, isMoveRefresh: true, direction, moveEl: e}})
   }
 
   const handleClick = () => {
-    const { selectArea } = state
     const cropCanvas = document.createElement('canvas')
 
     const style = cropper.current.style
@@ -198,10 +197,6 @@ function App() {
     const left = parseFloat(style.left) || 0
     const width = cropper.current.clientWidth
     const height = cropper.current.clientHeight
-    
-    console.log(top, left, width, height)
-    // const cropCanvas = document.getElementById('canvas')
-
 
     cropCanvas.height = height
     cropCanvas.width = width
@@ -210,12 +205,9 @@ function App() {
     resImg.src = imgUrl
     resImg.onload = () => {
 
-      const canvas2 = cropCanvas.getContext('2d').drawImage(resImg,  left, top, width, height, 0, 0, width, height)
-      cropCanvas.toDataURL('image/png', 1)
-      console.log('canvas2--------->', resImg,  cropCanvas.toDataURL('image/png', 1))
+      cropCanvas.getContext('2d').drawImage(resImg,  left, top, width, height, 0, 0, width, height)
       document.getElementById('img').src = cropCanvas.toDataURL('image/png', 1)
     }
-    // const base = canvas2.toDataURL('image')
   }
 
   return (
@@ -239,7 +231,7 @@ function App() {
 
       <div className="cropper-btn" onClick={handleClick}>裁剪图片</div>
       {/* <canvas id="canvas"></canvas> */}
-      <img id="img"></img>
+      <img id="img" alt=""></img>
     </div>
   )
 }
