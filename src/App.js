@@ -49,7 +49,7 @@ function App() {
   const handleReset = useCallback((e) => {
     const { resizeArea, direction, moveEl, isMoveRefresh } = state
     
-    const curEl = cropper.currents
+    const curEl = cropper.current
 
     if (!resizeArea || !moveEl || !isMoveRefresh) return
     // return
